@@ -57,7 +57,7 @@ def handle_body_collision args
 end
 
 def grow_body args
-  segment = args.state.body.any? ? args.state.body.last.clone 
+  segment = args.state.body.any? ? args.state.body.last.clone :
     args.state.head.clone
   vector = { x: 0, y: 0 }
   if segment.direction == :right
