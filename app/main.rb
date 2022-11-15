@@ -1,6 +1,18 @@
 GRID_SIZE = 20
 
 def handle_input args
+  inputs = args.inputs
+  head = args.state.head
+
+  if inputs.left
+    head.direction = :left
+  elsif inputs.right 
+    head.direction = :right
+  elsif inputs.up
+    head.direction = :up
+  elsif inputs.down
+    head.direction = :down
+  end
 end
 
 def update args
