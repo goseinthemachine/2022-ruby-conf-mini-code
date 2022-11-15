@@ -87,8 +87,8 @@ end
 
 def spawn_collectable args
   if args.state.collectable.nil?
-    x_rand = ((args.grid.w / GRID_SIZE) - 1).randomize(:ratio).ceil 
-    y_rand = ((args.grid.h / GRID_SIZE) - 1).randomize(:ratio).ceil 
+    x_rand = ((args.grid.w / GRID_SIZE) - 2).randomize(:ratio).ceil 
+    y_rand = ((args.grid.h / GRID_SIZE) - 2).randomize(:ratio).ceil 
     args.state.collectable = {
       x: x_rand * GRID_SIZE,
       y: y_rand * GRID_SIZE,
