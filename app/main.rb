@@ -49,6 +49,7 @@ def handle_collectable_collision args
   if args.state.collectable.intersect_rect? args.state.head
     args.state.collectable = nil
     args.state.score += 1
+    args.outputs.sounds << "sounds/collect.wav"
   end
 end
 
