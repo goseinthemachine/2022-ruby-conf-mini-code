@@ -67,9 +67,15 @@ def render_snake args
   args.outputs.solids << args.state.head
 end
 
+def render_walls args
+  walls = args.state.walls
+  args.outputs.solids << [walls.left, walls.right, walls.top, walls.bottom]
+end
+
 def render args
   render_grid args
   render_snake args
+  render_walls args
 end
 
 def defaults args
@@ -82,6 +88,34 @@ def defaults args
     r: 23,
     g: 245,
     b: 23,
+  }
+  args.state.walls.left ||= {
+    x: args.grid.left, 
+    y: args.grid.bottom, 
+    h: args.grid.h, 
+    w: GRID_SIZE, 
+    r: 12, g: 33, b: 245 
+  }
+  args.state.walls.right ||= {
+    x: args.grid.right - GRID_SIZE, 
+    y: args.grid.bottom, 
+    h: args.grid.h, 
+    w: GRID_SIZE, 
+    r: 12, g: 33, b: 245 
+  }
+  args.state.walls.top ||= {
+    x: args.grid.left, 
+    y: args.grid.top - GRID_SIZE, 
+    h: GRID_SIZE, 
+    w: args.grid.w, 
+    r: 12, g: 33, b: 245 
+  }
+  args.state.walls.bottom ||= {
+    x: args.grid.left, 
+    y: args.grid.bottom, 
+    h: GRID_SIZE, 
+    w: args.grid.w, 
+    r: 12, g: 33, b: 245 
   }
 end
 
