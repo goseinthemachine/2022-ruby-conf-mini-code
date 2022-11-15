@@ -4,33 +4,39 @@ SPEED = 10
 def handle_input args
   inputs = args.inputs
   head = args.state.head
-
-  if inputs.left
-    head.direction = :left
-  elsif inputs.right 
-    head.direction = :right
-  elsif inputs.up
-    head.direction = :up
-  elsif inputs.down
-    head.direction = :down
+  if args.tick_count.mod_zero? SPEED
+    head.previous_direction = head.direction
+    if inputs.left && head.previous_direction != :right
+      head.direction = :left
+    elsif inputs.right && head.previous_direction != :left
+      head.direction = :right
+    elsif inputs.up && head.previous_direction != :down
+      head.direction = :up
+    elsif inputs.down && head.previous_direction != :up
+      head.direction = :down
+    end
   end
 end
 
 def move_snake args
-  head = args.state.head
-  vector = { x: 0, y: 0 }
-  case head.direction
-  when :right
-    vector.x = 1
-  when :left
-    vector.x = -1
-  when :down
-    vector.y = -1
-  when :up
-    vector.y = 1
+  snake = [args.state.head, *args.state.body]
+  snake.each_with_index do |segment, index|
+    segment.previous_direction = segment.direction unless index == 0
+    segment.direction = snake[index - 1].previous_direction unless index == 0
+    vector = { x: 0, y: 0 }
+    case segment.direction
+    when :right
+      vector.x = 1
+    when :left
+      vector.x = -1
+    when :down
+      vector.y = -1
+    when :up
+      vector.y = 1
+    end
+    segment.x += GRID_SIZE * vector.x
+    segment.y += GRID_SIZE * vector.y
   end
-  head.x += GRID_SIZE * vector.x
-  head.y += GRID_SIZE * vector.y
 end
 
 def handle_boundary_collision args
@@ -44,12 +50,38 @@ def handle_boundary_collision args
   end
 end
 
+def handle_body_collision args
+  if args.state.body.any_intersect_rect? args.state.head
+    p "COLLIDED WITH BODY"
+  end
+end
+
+def grow_body args
+  segment = args.state.body.last.clone || 
+    args.state.head.clone
+  vector = { x: 0, y: 0 }
+  if segment.direction == :right
+    vector.x = -1
+  elsif segment.direction == :left
+    vector.x = 1
+  elsif segment.direction == :down
+    vector.y = 1
+  elsif segment.direction == :up
+    vector.y = -1
+  end
+
+  segment.x += (GRID_SIZE * vector.x)
+  segment.y += (GRID_SIZE * vector.y)
+  args.state.body << segment
+end
+
 def handle_collectable_collision args
   return if args.state.collectable.nil?
   if args.state.collectable.intersect_rect? args.state.head
     args.state.collectable = nil
     args.state.score += 1
     args.outputs.sounds << "sounds/collect.wav"
+    grow_body args 
   end
 end
 
@@ -74,6 +106,7 @@ def update args
     move_snake args
     handle_boundary_collision args
     handle_collectable_collision args
+    handle_body_collision args
     spawn_collectable args
   end
 end
@@ -103,7 +136,7 @@ def render_grid args
 end
 
 def render_snake args
-  args.outputs.solids << args.state.head
+  args.outputs.solids << [args.state.head, *args.state.body]
 end
 
 def render_walls args
@@ -169,6 +202,7 @@ def defaults args
   }
 
   args.state.score ||= 0
+  args.state.body ||= []
 end
 
 def tick args
