@@ -44,10 +44,36 @@ def handle_boundary_collision args
   end
 end
 
+def handle_collectable_collision args
+  return if args.state.collectable.nil?
+  if args.state.collectable.intersect_rect? args.state.head
+    args.state.collectable = nil
+    args.state.score += 1
+  end
+end
+
+def spawn_collectable args
+  if args.state.collectable.nil?
+    x_rand = ((args.grid.w / GRID_SIZE) - 1).randomize(:ratio).ceil 
+    y_rand = ((args.grid.h / GRID_SIZE) - 1).randomize(:ratio).ceil 
+    args.state.collectable = {
+      x: x_rand * GRID_SIZE,
+      y: y_rand * GRID_SIZE,
+      h: GRID_SIZE,
+      w: GRID_SIZE,
+      r: 233,
+      g: 23,
+      b: 23
+    }
+  end
+end
+
 def update args
   if args.tick_count.mod_zero? SPEED
     move_snake args
     handle_boundary_collision args
+    handle_collectable_collision args
+    spawn_collectable args
   end
 end
 
@@ -84,10 +110,20 @@ def render_walls args
   args.outputs.solids << [walls.left, walls.right, walls.top, walls.bottom]
 end
 
+def render_collectable args
+  args.outputs.solids << args.state.collectable
+end
+
+def render_score args
+  args.outputs.labels << { x: args.grid.left.shift_right(2 * GRID_SIZE), y: args.grid.top.shift_down(2 * GRID_SIZE), text: "Score: #{args.state.score}"}
+end
+
 def render args
   render_grid args
   render_snake args
   render_walls args
+  render_collectable args
+  render_score args
 end
 
 def defaults args
@@ -101,6 +137,7 @@ def defaults args
     g: 245,
     b: 23,
   }
+
   args.state.walls.left ||= {
     x: args.grid.left, 
     y: args.grid.bottom, 
@@ -129,6 +166,8 @@ def defaults args
     w: args.grid.w, 
     r: 12, g: 33, b: 245 
   }
+
+  args.state.score ||= 0
 end
 
 def tick args
