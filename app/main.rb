@@ -33,9 +33,21 @@ def move_snake args
   head.y += GRID_SIZE * vector.y
 end
 
+def handle_boundary_collision args
+  walls = args.state.walls
+  head = args.state.head
+  if [walls.left, walls.right, walls.top, walls.bottom].any_intersect_rect?  args.state.head 
+    head.x = head.x
+      .clamp(walls.left.right, walls.right.left - GRID_SIZE)
+    head.y = head.y
+      .clamp(walls.bottom.top, walls.top.bottom - GRID_SIZE)
+  end
+end
+
 def update args
   if args.tick_count.mod_zero? SPEED
     move_snake args
+    handle_boundary_collision args
   end
 end
 
