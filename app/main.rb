@@ -3,17 +3,23 @@ SPEED = 10
 
 def handle_input args
   inputs = args.inputs
-  head = args.state.head
-  if args.tick_count.mod_zero? SPEED
-    head.previous_direction = head.direction
-    if inputs.left && head.previous_direction != :right
-      head.direction = :left
-    elsif inputs.right && head.previous_direction != :left
-      head.direction = :right
-    elsif inputs.up && head.previous_direction != :down
-      head.direction = :up
-    elsif inputs.down && head.previous_direction != :up
-      head.direction = :down
+  if args.state.game_state == :game_over
+    if inputs.keyboard.key_down.escape
+      $gtk.reset_next_tick
+    end
+  else 
+    head = args.state.head
+    if args.tick_count.mod_zero? SPEED
+      head.previous_direction = head.direction
+      if inputs.left && head.previous_direction != :right
+        head.direction = :left
+      elsif inputs.right && head.previous_direction != :left
+        head.direction = :right
+      elsif inputs.up && head.previous_direction != :down
+        head.direction = :up
+      elsif inputs.down && head.previous_direction != :up
+        head.direction = :down
+      end
     end
   end
 end
@@ -43,16 +49,16 @@ def handle_boundary_collision args
   walls = args.state.walls
   head = args.state.head
   if [walls.left, walls.right, walls.top, walls.bottom].any_intersect_rect?  args.state.head 
-    head.x = head.x
-      .clamp(walls.left.right, walls.right.left - GRID_SIZE)
-    head.y = head.y
-      .clamp(walls.bottom.top, walls.top.bottom - GRID_SIZE)
+    # head.x = head.x.clamp(walls.left.right, walls.right.left - GRID_SIZE)
+    # head.y = head.y.clamp(walls.bottom.top, walls.top.bottom - GRID_SIZE)
+    args.state.game_state = :game_over
   end
 end
 
 def handle_body_collision args
   if args.state.body.any_intersect_rect? args.state.head
-    p "COLLIDED WITH BODY"
+    # p "COLLIDED WITH BODY"
+    args.state.game_state = :game_over
   end
 end
 
@@ -102,6 +108,7 @@ def spawn_collectable args
 end
 
 def update args
+  return if args.state.game_state == :game_over
   if args.tick_count.mod_zero? SPEED
     move_snake args
     handle_boundary_collision args
@@ -152,12 +159,40 @@ def render_score args
   args.outputs.labels << { x: args.grid.left.shift_right(2 * GRID_SIZE), y: args.grid.top.shift_down(2 * GRID_SIZE), text: "Score: #{args.state.score}"}
 end
 
+def render_game_over args
+  args.outputs.labels << {
+    x: args.grid.w / 2, 
+    y: (args.grid.h / 2).shift_up(16), 
+    text: "GAME OVER!", 
+    size_enum: 10, 
+    alignment_enum: 1 
+  }
+  args.outputs.labels << {
+    x: args.grid.w / 2,
+    y: (args.grid.h / 2).shift_down(24),
+    text: "Final Score was #{args.state.score} points!",
+    size_enum: 1,
+    alignment_enum: 1 
+  }
+  args.outputs.labels << {
+    x: args.grid.w / 2,
+    y: (args.grid.h / 2).shift_down(48),
+    text: "Press Escape to try again",
+    size_enum: 0,
+    alignment_enum: 1
+  }
+end
+
 def render args
-  render_grid args
-  render_snake args
-  render_walls args
-  render_collectable args
-  render_score args
+  if args.state.game_state == :game_over
+    render_game_over args
+  else 
+    render_grid args
+    render_snake args
+    render_walls args
+    render_collectable args
+    render_score args
+  end
 end
 
 def defaults args
@@ -203,6 +238,7 @@ def defaults args
 
   args.state.score ||= 0
   args.state.body ||= []
+  args.state.game_state ||= :in_play
 end
 
 def tick args
